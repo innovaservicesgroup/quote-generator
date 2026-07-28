@@ -1,0 +1,11 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[functions]
+  # Puppeteer + Chromium need a bit more room than Netlify's default.
+  # This raises memory available to the PDF-generation function.
+  included_files = ["src/lib/templates/static/**"]
