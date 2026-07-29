@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Explicit source paths — don't rely on Tailwind's automatic content
+   detection, which can behave inconsistently across build environments
+   (e.g. Netlify's Next.js Runtime). */
+@source "../app/**/*.{ts,tsx}";
+@source "../components/**/*.{ts,tsx}";
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
