@@ -54,21 +54,25 @@ export function renderAreaFamilyTemplate(
     )
     .join("\n");
 
-  const customItemsHtml =
-    area.customItems && area.customItems.length
-      ? `
+  const customSectionsHtml =
+    area.customSections && area.customSections.length
+      ? area.customSections
+          .map(
+            (section) => `
     <table class="area-block">
-      <tr><td colspan="2" class="area-name">Custom Scope of Work</td></tr>
+      <tr><td colspan="2" class="area-name">${esc(section.header) || "Custom Area"}</td></tr>
       <tr><th class="freq">Frequency</th><th>Task</th></tr>
-      ${area.customItems
+      ${section.tasks
         .map(
-          (item) =>
-            `<tr><td class="freq">${esc(item.frequency) || "&nbsp;"}</td><td><ul class="task-list"><li>${esc(
-              item.task
+          (t) =>
+            `<tr><td class="freq">${esc(t.frequency) || "&nbsp;"}</td><td><ul class="task-list"><li>${esc(
+              t.task
             )}</li></ul></td></tr>`
         )
         .join("")}
     </table>`
+          )
+          .join("\n")
       : "";
 
   const exclusionsHtml =
@@ -161,7 +165,7 @@ export function renderAreaFamilyTemplate(
 
     <h3 class="section-title">Schedule of Duties</h3>
     ${areasHtml}
-    ${customItemsHtml}
+    ${customSectionsHtml}
     ${exclusionsHtml}
 
     <h3 class="section-title">Pricing Table</h3>

@@ -93,7 +93,7 @@ export function buildDefaultQuoteData(templateId: string): QuoteData {
       consumables: [],
       pricing: { costPerMonth: "", contractPrice: "", frequencyOfWork: "" },
       serviceCoverageNotes: defaultCoverageFor(templateId),
-      customItems: [],
+      customSections: [],
     };
   }
 

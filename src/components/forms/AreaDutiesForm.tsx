@@ -7,6 +7,7 @@ import {
   ConsumableRow,
 } from "@/lib/templates/shared/types";
 import { TemplateMeta } from "@/lib/templates/shared/types";
+import { COMMON_TASKS, OTHER_TASK_OPTION } from "@/lib/templates/data/commonTasks";
 
 const FREQUENCY_OPTIONS = [
   "Daily",
@@ -55,29 +56,74 @@ export default function AreaDutiesForm({
     onChange({ ...data, [key]: rows } as AreaFamilyData);
   };
 
-  const addCustomItem = () => {
+  const addCustomSection = () => {
     onChange({
       ...data,
-      customItems: [
-        ...data.customItems,
-        { id: crypto.randomUUID(), task: "", frequency: "" },
+      customSections: [
+        ...data.customSections,
+        {
+          id: crypto.randomUUID(),
+          header: "",
+          tasks: [{ id: crypto.randomUUID(), task: "", frequency: "" }],
+        },
       ],
     });
   };
 
-  const updateCustomItem = (id: string, patch: Partial<{ task: string; frequency: string }>) => {
+  const updateSectionHeader = (sectionId: string, header: string) => {
     onChange({
       ...data,
-      customItems: data.customItems.map((item) =>
-        item.id === id ? { ...item, ...patch } : item
+      customSections: data.customSections.map((s) =>
+        s.id === sectionId ? { ...s, header } : s
       ),
     });
   };
 
-  const removeCustomItem = (id: string) => {
+  const removeSection = (sectionId: string) => {
     onChange({
       ...data,
-      customItems: data.customItems.filter((item) => item.id !== id),
+      customSections: data.customSections.filter((s) => s.id !== sectionId),
+    });
+  };
+
+  const addTaskToSection = (sectionId: string) => {
+    onChange({
+      ...data,
+      customSections: data.customSections.map((s) =>
+        s.id === sectionId
+          ? {
+              ...s,
+              tasks: [...s.tasks, { id: crypto.randomUUID(), task: "", frequency: "" }],
+            }
+          : s
+      ),
+    });
+  };
+
+  const updateTask = (
+    sectionId: string,
+    taskId: string,
+    patch: Partial<{ task: string; frequency: string }>
+  ) => {
+    onChange({
+      ...data,
+      customSections: data.customSections.map((s) =>
+        s.id === sectionId
+          ? {
+              ...s,
+              tasks: s.tasks.map((t) => (t.id === taskId ? { ...t, ...patch } : t)),
+            }
+          : s
+      ),
+    });
+  };
+
+  const removeTask = (sectionId: string, taskId: string) => {
+    onChange({
+      ...data,
+      customSections: data.customSections.map((s) =>
+        s.id === sectionId ? { ...s, tasks: s.tasks.filter((t) => t.id !== taskId) } : s
+      ),
     });
   };
 
@@ -154,50 +200,110 @@ export default function AreaDutiesForm({
             <span className="text-gray-400 font-normal">(optional)</span>
           </h3>
           <button
-            onClick={addCustomItem}
+            onClick={addCustomSection}
             className="text-xs text-[#006b86] font-semibold hover:underline"
           >
-            + Add custom item
+            + Add area
           </button>
         </div>
         <p className="text-xs text-gray-500 mb-3">
-          For anything not covered by the standard areas above — e.g. "Hardwood
-          floor in Building 3". Appears as its own line in the Schedule of Duties.
+          For anything not covered by the standard areas above. Give it a
+          header — e.g. "Building 3 — Bathroom" — then pick tasks for it.
         </p>
-        {data.customItems.length === 0 && (
-          <p className="text-xs text-gray-400 italic mb-2">No custom items added.</p>
+        {data.customSections.length === 0 && (
+          <p className="text-xs text-gray-400 italic mb-2">No custom areas added.</p>
         )}
-        {data.customItems.map((item) => (
-          <div
-            key={item.id}
-            className="grid grid-cols-1 sm:grid-cols-[1fr_160px_auto] gap-2 mb-2"
-          >
-            <input
-              value={item.task}
-              onChange={(e) => updateCustomItem(item.id, { task: e.target.value })}
-              placeholder="Custom task description"
-              className="rounded-lg border border-gray-300 px-2.5 py-2 text-base sm:text-sm focus:outline-none focus:border-[#40aac4]"
-            />
-            <select
-              value={item.frequency}
-              onChange={(e) => updateCustomItem(item.id, { frequency: e.target.value })}
-              className="rounded-lg border border-gray-300 px-2.5 py-2 text-base sm:text-sm"
-            >
-              <option value="">Frequency…</option>
-              {FREQUENCY_OPTIONS.map((f) => (
-                <option key={f} value={f}>
-                  {f}
-                </option>
-              ))}
-            </select>
-            <button
-              onClick={() => removeCustomItem(item.id)}
-              className="text-gray-400 hover:text-red-500 text-base px-3 py-2 self-start"
-            >
-              ✕
-            </button>
-          </div>
-        ))}
+        <div className="space-y-4">
+          {data.customSections.map((section) => (
+            <div key={section.id} className="border border-gray-200 rounded-lg overflow-hidden">
+              <div className="flex items-center gap-2 bg-gray-50 px-3 py-2.5">
+                <input
+                  value={section.header}
+                  onChange={(e) => updateSectionHeader(section.id, e.target.value)}
+                  placeholder='Header — e.g. "Building 3 — Bathroom"'
+                  className="flex-1 rounded-lg border border-gray-300 px-2.5 py-1.5 text-base sm:text-sm font-medium focus:outline-none focus:border-[#40aac4]"
+                />
+                <button
+                  onClick={() => removeSection(section.id)}
+                  className="text-gray-400 hover:text-red-500 text-base px-2"
+                  title="Remove this area"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="p-3 space-y-2">
+                {section.tasks.map((t) => {
+                  const isPreset = COMMON_TASKS.includes(t.task);
+                  const isOther = t.task !== "" && !isPreset;
+                  return (
+                    <div
+                      key={t.id}
+                      className="grid grid-cols-1 sm:grid-cols-[1fr_140px_auto] gap-2"
+                    >
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <select
+                          value={isOther ? OTHER_TASK_OPTION : t.task}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            updateTask(section.id, t.id, {
+                              task: val === OTHER_TASK_OPTION ? "" : val,
+                            });
+                          }}
+                          className="flex-1 rounded-lg border border-gray-300 px-2.5 py-2 text-base sm:text-sm"
+                        >
+                          <option value="">Pick a task…</option>
+                          {COMMON_TASKS.map((task) => (
+                            <option key={task} value={task}>
+                              {task}
+                            </option>
+                          ))}
+                          <option value={OTHER_TASK_OPTION}>{OTHER_TASK_OPTION}</option>
+                        </select>
+                        {isOther && (
+                          <input
+                            value={t.task}
+                            onChange={(e) =>
+                              updateTask(section.id, t.id, { task: e.target.value })
+                            }
+                            placeholder="Type the task"
+                            className="flex-1 rounded-lg border border-gray-300 px-2.5 py-2 text-base sm:text-sm focus:outline-none focus:border-[#40aac4]"
+                          />
+                        )}
+                      </div>
+                      <select
+                        value={t.frequency}
+                        onChange={(e) =>
+                          updateTask(section.id, t.id, { frequency: e.target.value })
+                        }
+                        className="rounded-lg border border-gray-300 px-2.5 py-2 text-base sm:text-sm"
+                      >
+                        <option value="">Frequency…</option>
+                        {FREQUENCY_OPTIONS.map((f) => (
+                          <option key={f} value={f}>
+                            {f}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={() => removeTask(section.id, t.id)}
+                        className="text-gray-400 hover:text-red-500 text-base px-3 py-2 self-start"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  );
+                })}
+                <button
+                  onClick={() => addTaskToSection(section.id)}
+                  className="text-xs text-[#006b86] font-semibold hover:underline"
+                >
+                  + Add task
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div>

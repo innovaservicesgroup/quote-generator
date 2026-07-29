@@ -48,12 +48,20 @@ export interface AdditionalServiceRow {
   charge: string;
 }
 
-/** A free-text task added on top of the fixed duty areas — e.g.
- *  "Hardwood floor in Building 3" with its own frequency. */
-export interface CustomScopeItem {
+/** A single task line within a Custom Scope of Work section — either
+ *  picked from the common tasks dropdown or typed manually. */
+export interface CustomScopeTask {
   id: string;
   task: string;
   frequency: string;
+}
+
+/** A custom area not covered by the fixed duty areas — e.g. "Building 3
+ *  — Bathroom" — with its own header and one or more tasks. */
+export interface CustomScopeSection {
+  id: string;
+  header: string;
+  tasks: CustomScopeTask[];
 }
 
 export interface ConsumableRow {
@@ -76,9 +84,9 @@ export interface AreaFamilyData {
   /** Free-text lines for the "Service Coverage" checklist at the top of
    *  area-family templates (e.g. site/floor names covered by this quote). */
   serviceCoverageNotes: string[];
-  /** Custom Scope of Work — manually added task + frequency pairs not
-   *  covered by the fixed duty areas (e.g. "Hardwood floor in Building 3"). */
-  customItems: CustomScopeItem[];
+  /** Custom Scope of Work — manually added areas with their own header
+   *  and task list, for anything not covered by the fixed duty areas. */
+  customSections: CustomScopeSection[];
 }
 
 // ---- Family B: free-form line items ----
