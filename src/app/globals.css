@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
-/* Explicit source paths — don't rely on Tailwind's automatic content
-   detection, which can behave inconsistently across build environments
-   (e.g. Netlify's Next.js Runtime). */
-@source "../app/**/*.{ts,tsx}";
-@source "../components/**/*.{ts,tsx}";
+/* Explicit source paths so Tailwind reliably finds component files in
+   every build environment, instead of relying on automatic detection. */
+@source "../app/**";
+@source "../components/**";
+@source "../lib/**";
 
 :root {
   --background: #ffffff;
