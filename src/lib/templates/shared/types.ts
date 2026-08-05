@@ -136,6 +136,9 @@ export interface QuoteData {
   templateId: string;
   client: ClientDetails;
   reference: ReferenceScheduleData;
+  /** Who signs on Innova's behalf — controls the name and signature
+   *  image shown on the Sign-Off page. */
+  innovaRepresentative: "Pascal Dufroux" | "Celia Dufroux";
   area?: AreaFamilyData;
   lineitem?: LineItemFamilyData;
   roomrate?: RoomRateFamilyData;

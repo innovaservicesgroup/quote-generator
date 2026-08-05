@@ -6,6 +6,7 @@ import {
   loadStaticPartial,
   wrapDocument,
   escapeHtml,
+  signatureImageFor,
 } from "./layout";
 
 function esc(s: string) {
@@ -32,7 +33,7 @@ export function renderLineItemFamilyTemplate(
   data: QuoteData,
   config: LineItemTemplateConfig
 ): string {
-  const { client, reference, lineitem } = data;
+  const { client, reference, lineitem, innovaRepresentative } = data;
   if (!lineitem)
     throw new Error(`Missing lineitem-family data for ${data.templateId}`);
   const assets = getBrandAssets();
@@ -122,7 +123,16 @@ export function renderLineItemFamilyTemplate(
   <div class="page page-break">
     ${docHeader(assets)}
     <div class="commitment-doc">
-      ${loadStaticPartial(config.staticCommitmentFile)}
+      ${loadStaticPartial(
+        config.staticCommitmentFile,
+        { INNOVA_REP_NAME: innovaRepresentative },
+        {
+          INNOVA_SIGNATURE_IMG: `<img src="${signatureImageFor(
+            innovaRepresentative,
+            assets
+          )}" alt="Signature" style="height:34px;" />`,
+        }
+      )}
     </div>
     ${docFooter(assets)}
   </div>

@@ -26,3 +26,15 @@ export const COMMON_TASKS = [
 ];
 
 export const OTHER_TASK_OPTION = "Other (type manually)";
+
+// Preset options for the Service Coverage checklist quick-pick.
+export const COMMON_COVERAGE_NOTES = [
+  "Front entrance / reception / waiting area",
+  "All offices and common areas",
+  "All floors / levels",
+  "All toilets and bathrooms",
+  "Kitchenette / staff room",
+  "Consultation, treatment, and procedure rooms",
+  "Car park / external areas",
+  "Lift(s) and stairwells",
+];

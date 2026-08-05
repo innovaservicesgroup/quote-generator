@@ -7,16 +7,20 @@ export default function Step3ClientDetails({
   meta,
   client,
   reference,
+  innovaRepresentative,
   onClientChange,
   onReferenceChange,
+  onRepresentativeChange,
   onNext,
   onBack,
 }: {
   meta: TemplateMeta;
   client: ClientDetails;
   reference: ReferenceScheduleData;
+  innovaRepresentative: string;
   onClientChange: (c: ClientDetails) => void;
   onReferenceChange: (r: ReferenceScheduleData) => void;
+  onRepresentativeChange: (rep: string) => void;
   onNext: () => void;
   onBack: () => void;
 }) {
@@ -95,6 +99,19 @@ export default function Step3ClientDetails({
           value={reference.noticeToReschedule}
           onChange={setRef("noticeToReschedule")}
         />
+        <label className="block">
+          <span className="block text-xs font-semibold text-gray-600 mb-1">
+            Innova Representative
+          </span>
+          <select
+            value={innovaRepresentative}
+            onChange={(e) => onRepresentativeChange(e.target.value)}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:border-[#40aac4]"
+          >
+            <option value="Pascal Dufroux">Pascal Dufroux</option>
+            <option value="Celia Dufroux">Celia Dufroux</option>
+          </select>
+        </label>
       </div>
 
       <div className="flex items-center justify-between mt-8">

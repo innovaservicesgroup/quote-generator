@@ -6,6 +6,7 @@ import {
   loadStaticPartial,
   wrapDocument,
   escapeHtml,
+  signatureImageFor,
 } from "./layout";
 
 function esc(s: string) {
@@ -35,7 +36,7 @@ export function renderAreaFamilyTemplate(
   data: QuoteData,
   config: AreaTemplateConfig
 ): string {
-  const { client, reference, area } = data;
+  const { client, reference, area, innovaRepresentative } = data;
   if (!area) throw new Error(`Missing area-family data for ${data.templateId}`);
   const assets = getBrandAssets();
 
@@ -190,7 +191,16 @@ export function renderAreaFamilyTemplate(
   <div class="page page-break">
     ${docHeader(assets)}
     <div class="commitment-doc">
-      ${loadStaticPartial(config.staticCommitmentFile)}
+      ${loadStaticPartial(
+        config.staticCommitmentFile,
+        { INNOVA_REP_NAME: innovaRepresentative },
+        {
+          INNOVA_SIGNATURE_IMG: `<img src="${signatureImageFor(
+            innovaRepresentative,
+            assets
+          )}" alt="Signature" style="height:34px;" />`,
+        }
+      )}
     </div>
     ${docFooter(assets)}
   </div>

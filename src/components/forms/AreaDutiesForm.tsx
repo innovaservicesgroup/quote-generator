@@ -7,7 +7,7 @@ import {
   ConsumableRow,
 } from "@/lib/templates/shared/types";
 import { TemplateMeta } from "@/lib/templates/shared/types";
-import { COMMON_TASKS, OTHER_TASK_OPTION } from "@/lib/templates/data/commonTasks";
+import { COMMON_TASKS, COMMON_COVERAGE_NOTES } from "@/lib/templates/data/commonTasks";
 
 const FREQUENCY_OPTIONS = [
   "Daily",
@@ -54,6 +54,23 @@ export default function AreaDutiesForm({
   const removeRow = (key: "additionalServices" | "consumables", index: number) => {
     const rows = (data[key] as any[]).filter((_, i) => i !== index);
     onChange({ ...data, [key]: rows } as AreaFamilyData);
+  };
+
+  const addCoverageNote = () => {
+    onChange({ ...data, serviceCoverageNotes: [...data.serviceCoverageNotes, ""] });
+  };
+
+  const updateCoverageNote = (index: number, value: string) => {
+    const notes = [...data.serviceCoverageNotes];
+    notes[index] = value;
+    onChange({ ...data, serviceCoverageNotes: notes });
+  };
+
+  const removeCoverageNote = (index: number) => {
+    onChange({
+      ...data,
+      serviceCoverageNotes: data.serviceCoverageNotes.filter((_, i) => i !== index),
+    });
   };
 
   const addCustomSection = () => {
@@ -129,6 +146,60 @@ export default function AreaDutiesForm({
 
   return (
     <div className="space-y-8">
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-semibold text-[#006b86]">
+            Service Coverage <span className="text-gray-400 font-normal">(optional)</span>
+          </h3>
+          <button
+            onClick={addCoverageNote}
+            className="text-xs text-[#006b86] font-semibold hover:underline"
+          >
+            + Add line
+          </button>
+        </div>
+        <p className="text-xs text-gray-500 mb-3">
+          Short lines describing what's covered — shown as a checklist at the top of
+          the quote. Type freely, or use the quick-pick dropdown.
+        </p>
+        {data.serviceCoverageNotes.length === 0 && (
+          <p className="text-xs text-gray-400 italic mb-2">No coverage lines added.</p>
+        )}
+        <div className="space-y-2">
+          {data.serviceCoverageNotes.map((note, i) => (
+            <div key={i} className="flex flex-col sm:flex-row gap-2">
+              <input
+                value={note}
+                onChange={(e) => updateCoverageNote(i, e.target.value)}
+                placeholder="Type a coverage line, or pick one →"
+                className="flex-1 rounded-lg border border-gray-300 px-2.5 py-2 text-base sm:text-sm focus:outline-none focus:border-[#40aac4]"
+              />
+              <select
+                value=""
+                onChange={(e) => {
+                  if (e.target.value) updateCoverageNote(i, e.target.value);
+                }}
+                className="rounded-lg border border-gray-300 px-2 py-2 text-sm text-gray-500 sm:w-56"
+                title="Quick-fill from common coverage lines"
+              >
+                <option value="">Quick pick…</option>
+                {COMMON_COVERAGE_NOTES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={() => removeCoverageNote(i)}
+                className="text-gray-400 hover:text-red-500 text-base px-2"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div>
         <h3 className="text-sm font-semibold text-[#006b86] mb-2">
           Schedule of Duties
@@ -233,67 +304,60 @@ export default function AreaDutiesForm({
               </div>
 
               <div className="p-3 space-y-2">
-                {section.tasks.map((t) => {
-                  const isPreset = COMMON_TASKS.includes(t.task);
-                  const isOther = t.task !== "" && !isPreset;
-                  return (
-                    <div
-                      key={t.id}
-                      className="grid grid-cols-1 sm:grid-cols-[1fr_140px_auto] gap-2"
-                    >
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <select
-                          value={isOther ? OTHER_TASK_OPTION : t.task}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            updateTask(section.id, t.id, {
-                              task: val === OTHER_TASK_OPTION ? "" : val,
-                            });
-                          }}
-                          className="flex-1 rounded-lg border border-gray-300 px-2.5 py-2 text-base sm:text-sm"
-                        >
-                          <option value="">Pick a task…</option>
-                          {COMMON_TASKS.map((task) => (
-                            <option key={task} value={task}>
-                              {task}
-                            </option>
-                          ))}
-                          <option value={OTHER_TASK_OPTION}>{OTHER_TASK_OPTION}</option>
-                        </select>
-                        {isOther && (
-                          <input
-                            value={t.task}
-                            onChange={(e) =>
-                              updateTask(section.id, t.id, { task: e.target.value })
-                            }
-                            placeholder="Type the task"
-                            className="flex-1 rounded-lg border border-gray-300 px-2.5 py-2 text-base sm:text-sm focus:outline-none focus:border-[#40aac4]"
-                          />
-                        )}
-                      </div>
-                      <select
-                        value={t.frequency}
+                {section.tasks.map((t) => (
+                  <div
+                    key={t.id}
+                    className="grid grid-cols-1 sm:grid-cols-[1fr_140px_auto] gap-2"
+                  >
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <input
+                        value={t.task}
                         onChange={(e) =>
-                          updateTask(section.id, t.id, { frequency: e.target.value })
+                          updateTask(section.id, t.id, { task: e.target.value })
                         }
-                        className="rounded-lg border border-gray-300 px-2.5 py-2 text-base sm:text-sm"
+                        placeholder="Type a task, or pick one →"
+                        className="flex-1 rounded-lg border border-gray-300 px-2.5 py-2 text-base sm:text-sm focus:outline-none focus:border-[#40aac4]"
+                      />
+                      <select
+                        value=""
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            updateTask(section.id, t.id, { task: e.target.value });
+                          }
+                        }}
+                        className="rounded-lg border border-gray-300 px-2 py-2 text-sm text-gray-500 sm:w-40"
+                        title="Quick-fill from common tasks"
                       >
-                        <option value="">Frequency…</option>
-                        {FREQUENCY_OPTIONS.map((f) => (
-                          <option key={f} value={f}>
-                            {f}
+                        <option value="">Quick pick…</option>
+                        {COMMON_TASKS.map((task) => (
+                          <option key={task} value={task}>
+                            {task}
                           </option>
                         ))}
                       </select>
-                      <button
-                        onClick={() => removeTask(section.id, t.id)}
-                        className="text-gray-400 hover:text-red-500 text-base px-3 py-2 self-start"
-                      >
-                        ✕
-                      </button>
                     </div>
-                  );
-                })}
+                    <select
+                      value={t.frequency}
+                      onChange={(e) =>
+                        updateTask(section.id, t.id, { frequency: e.target.value })
+                      }
+                      className="rounded-lg border border-gray-300 px-2.5 py-2 text-base sm:text-sm"
+                    >
+                      <option value="">Frequency…</option>
+                      {FREQUENCY_OPTIONS.map((f) => (
+                        <option key={f} value={f}>
+                          {f}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => removeTask(section.id, t.id)}
+                      className="text-gray-400 hover:text-red-500 text-base px-3 py-2 self-start"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
                 <button
                   onClick={() => addTaskToSection(section.id)}
                   className="text-xs text-[#006b86] font-semibold hover:underline"
@@ -310,6 +374,10 @@ export default function AreaDutiesForm({
         <h3 className="text-sm font-semibold text-[#006b86] mb-2">
           Pricing
         </h3>
+        <p className="text-xs text-gray-500 mb-3">
+          The total updates automatically as ×12 the monthly cost — feel free to
+          adjust it manually afterward for pro-rated or custom contracts.
+        </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <label className="block">
             <span className="block text-xs font-semibold text-gray-600 mb-1">
@@ -317,19 +385,22 @@ export default function AreaDutiesForm({
             </span>
             <input
               value={data.pricing.costPerMonth}
-              onChange={(e) =>
+              onChange={(e) => {
+                const monthly = e.target.value;
+                const parsed = parseFloat(monthly);
+                const autoTotal = !isNaN(parsed) ? (parsed * 12).toFixed(2) : data.pricing.contractPrice;
                 onChange({
                   ...data,
-                  pricing: { ...data.pricing, costPerMonth: e.target.value },
-                })
-              }
+                  pricing: { ...data.pricing, costPerMonth: monthly, contractPrice: autoTotal },
+                });
+              }}
               className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:border-[#40aac4]"
               placeholder="e.g. 2450.00"
             />
           </label>
           <label className="block">
             <span className="block text-xs font-semibold text-gray-600 mb-1">
-              Total Contract Price ($)
+              Total Contract Price (12 Months) ($)
             </span>
             <input
               value={data.pricing.contractPrice}

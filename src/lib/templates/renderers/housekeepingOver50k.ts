@@ -6,6 +6,7 @@ import {
   loadStaticPartial,
   wrapDocument,
   escapeHtml,
+  signatureImageFor,
 } from "../shared/layout";
 import {
   HOUSEKEEPING_DEPARTURES_SECTIONS,
@@ -39,7 +40,7 @@ function renderSections(title: string, sections: HousekeepingSection[]): string 
 }
 
 export function renderHousekeepingOver50k(data: QuoteData): string {
-  const { client, reference, roomrate } = data;
+  const { client, reference, roomrate, innovaRepresentative } = data;
   if (!roomrate) throw new Error("Missing roomrate-family data for housekeeping-over-50k");
   const assets = getBrandAssets();
 
@@ -119,7 +120,16 @@ export function renderHousekeepingOver50k(data: QuoteData): string {
   <div class="page page-break">
     ${docHeader(assets)}
     <div class="commitment-doc">
-      ${loadStaticPartial("housekeeping-over-50k-commitment.html")}
+      ${loadStaticPartial(
+        "housekeeping-over-50k-commitment.html",
+        { INNOVA_REP_NAME: innovaRepresentative },
+        {
+          INNOVA_SIGNATURE_IMG: `<img src="${signatureImageFor(
+            innovaRepresentative,
+            assets
+          )}" alt="Signature" style="height:34px;" />`,
+        }
+      )}
     </div>
     ${docFooter(assets)}
   </div>

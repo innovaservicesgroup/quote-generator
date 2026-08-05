@@ -9,7 +9,7 @@ export function renderOfficeUnder50k(data: QuoteData): string {
     staticTermsFile: "office-under-50k-terms.html",
     staticCommitmentFile: "office-under-50k-commitment.html",
     exclusions: OFFICE_UNDER_50K_EXCLUSIONS,
-    showServiceCoverage: false,
+    showServiceCoverage: true,
     pdfTitle: "Commercial Cleaning Quotation - Office",
   });
 }

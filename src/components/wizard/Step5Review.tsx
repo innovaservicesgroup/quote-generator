@@ -17,6 +17,7 @@ export default function Step5Review({
   const [previewHtml, setPreviewHtml] = useState<string>("");
   const [loadingPreview, setLoadingPreview] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [generatingWord, setGeneratingWord] = useState(false);
   const [emailing, setEmailing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [emailNotice, setEmailNotice] = useState<string | null>(null);
@@ -50,21 +51,34 @@ export default function Step5Review({
     };
   }, [quoteData]);
 
-  const fetchPdfBlob = async () => {
-    const res = await fetch("/api/generate-pdf", {
+  const downloadFromEndpoint = async (endpoint: string, fallbackName: string) => {
+    const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(quoteData),
     });
     if (!res.ok) {
       const err = await res.json();
-      throw new Error(err.error || "PDF generation failed");
+      throw new Error(err.error || "Generation failed");
     }
     const disposition = res.headers.get("Content-Disposition") || "";
     const match = disposition.match(/filename="(.+)"/);
-    const fileName = match ? match[1] : "quote.pdf";
+    const fileName = match ? match[1] : fallbackName;
     const blob = await res.blob();
     return { blob, fileName };
+  };
+
+  const fetchPdfBlob = async () => downloadFromEndpoint("/api/generate-pdf", "quote.pdf");
+
+  const triggerDownload = (blob: Blob, fileName: string) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   };
 
   const handleDownload = async () => {
@@ -72,18 +86,27 @@ export default function Step5Review({
     setError(null);
     try {
       const { blob, fileName } = await fetchPdfBlob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+      triggerDownload(blob, fileName);
     } catch (e: any) {
       setError(e.message);
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const handleDownloadWord = async () => {
+    setGeneratingWord(true);
+    setError(null);
+    try {
+      const { blob, fileName } = await downloadFromEndpoint(
+        "/api/generate-docx",
+        "quote.docx"
+      );
+      triggerDownload(blob, fileName);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setGeneratingWord(false);
     }
   };
 
@@ -170,14 +193,21 @@ export default function Step5Review({
               </span>
               <input
                 value={quoteData.area.pricing.costPerMonth}
-                onChange={(e) => updateAreaPricing({ costPerMonth: e.target.value })}
+                onChange={(e) => {
+                  const monthly = e.target.value;
+                  const parsed = parseFloat(monthly);
+                  const autoTotal = !isNaN(parsed)
+                    ? (parsed * 12).toFixed(2)
+                    : quoteData.area!.pricing.contractPrice;
+                  updateAreaPricing({ costPerMonth: monthly, contractPrice: autoTotal });
+                }}
                 placeholder="e.g. 2450.00"
                 className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:border-[#40aac4]"
               />
             </label>
             <label className="block">
               <span className="block text-xs font-semibold text-gray-600 mb-1">
-                Total Contract Price ($)
+                Total Contract Price (12 Months) ($)
               </span>
               <input
                 value={quoteData.area.pricing.contractPrice}
@@ -262,14 +292,21 @@ export default function Step5Review({
         <div className="flex flex-col sm:flex-row gap-3 order-1 sm:order-2 sm:ml-auto">
           <button
             onClick={handleEmailToClient}
-            disabled={emailing || generating}
+            disabled={emailing || generating || generatingWord}
             className="border border-[#40aac4] text-[#006b86] disabled:opacity-50 text-sm font-semibold px-6 py-3 rounded-lg hover:bg-[#40aac4]/5 transition-colors"
           >
             {emailing ? "Preparing email…" : "Email Quote to Client"}
           </button>
           <button
+            onClick={handleDownloadWord}
+            disabled={generating || emailing || generatingWord}
+            className="border border-[#40aac4] text-[#006b86] disabled:opacity-50 text-sm font-semibold px-6 py-3 rounded-lg hover:bg-[#40aac4]/5 transition-colors"
+          >
+            {generatingWord ? "Generating Word…" : "Download Word"}
+          </button>
+          <button
             onClick={handleDownload}
-            disabled={generating || emailing}
+            disabled={generating || emailing || generatingWord}
             className="bg-[#40aac4] disabled:bg-gray-300 text-white text-sm font-semibold px-6 py-3 rounded-lg hover:bg-[#369ab3] transition-colors"
           >
             {generating ? "Generating PDF…" : "Download PDF"}

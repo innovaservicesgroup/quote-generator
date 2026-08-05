@@ -12,7 +12,7 @@ export const BRAND = {
   white: "#ffffff",
 };
 
-let _cache: { logo?: string; badge?: string } = {};
+let _cache: { logo?: string; badge?: string; signaturePascal?: string; signatureCelia?: string } = {};
 
 function toDataUri(fileName: string): string {
   const filePath = path.join(process.cwd(), "public", "brand", fileName);
@@ -23,7 +23,18 @@ function toDataUri(fileName: string): string {
 export function getBrandAssets() {
   if (!_cache.logo) _cache.logo = toDataUri("logo-dark.png");
   if (!_cache.badge) _cache.badge = toDataUri("badge.png");
-  return { logo: _cache.logo!, badge: _cache.badge! };
+  if (!_cache.signaturePascal) _cache.signaturePascal = toDataUri("signature-pascal.png");
+  if (!_cache.signatureCelia) _cache.signatureCelia = toDataUri("signature-celia.png");
+  return {
+    logo: _cache.logo!,
+    badge: _cache.badge!,
+    signaturePascal: _cache.signaturePascal!,
+    signatureCelia: _cache.signatureCelia!,
+  };
+}
+
+export function signatureImageFor(rep: string, assets: { signaturePascal: string; signatureCelia: string }) {
+  return rep === "Celia Dufroux" ? assets.signatureCelia : assets.signaturePascal;
 }
 
 export const sharedStyles = `
@@ -164,9 +175,12 @@ export const sharedStyles = `
     font-size: 9.5px;
   }
   .legal-doc table thead tr:first-child th { background: ${BRAND.headerTeal}; color: #fff; font-weight: 700; }
-  .legal-doc ol { padding-left: 20px; margin: 6px 0; }
-  .legal-doc ol > li { margin-bottom: 6px; }
+  .legal-doc ol { padding-left: 22px; margin: 6px 0; }
+  .legal-doc ol > li { margin-bottom: 8px; }
   .legal-doc ol > li > p:first-child strong { color: ${BRAND.headingTeal}; }
+  .legal-doc ol ol { padding-left: 24px; margin: 4px 0; }
+  .legal-doc ol ol > li { margin-bottom: 5px; }
+  .legal-doc li > p { margin: 0 0 4px 0; }
   .legal-doc blockquote { margin: 4px 0 4px 14px; padding-left: 10px; border-left: 2px solid #ddd; color: #333; }
   .legal-doc u { text-decoration: underline; color: ${BRAND.headingTeal}; }
   .commitment-doc { font-size: 10.5px; }
@@ -175,11 +189,18 @@ export const sharedStyles = `
   .commitment-doc table th { border: 1px solid #999; padding: 6px 8px; text-align: left; font-weight: 700; background: #f7f7f7; width: 26%; }
 `;
 
-export function loadStaticPartial(fileName: string, replacements: Record<string, string> = {}): string {
+export function loadStaticPartial(
+  fileName: string,
+  replacements: Record<string, string> = {},
+  rawReplacements: Record<string, string> = {}
+): string {
   const filePath = path.join(process.cwd(), "src", "lib", "templates", "static", fileName);
   let html = fs.readFileSync(filePath, "utf-8");
   for (const [key, value] of Object.entries(replacements)) {
     html = html.split(`{{${key}}}`).join(escapeHtml(value));
+  }
+  for (const [key, value] of Object.entries(rawReplacements)) {
+    html = html.split(`{{${key}}}`).join(value);
   }
   return html;
 }

@@ -7,7 +7,7 @@ export function renderBodyCorporateSmallUnder50k(data: QuoteData): string {
     docSubtitle: "QUOTATION SCHEDULE",
     staticTermsFile: "body-corporate-small-under-50k-terms.html",
     staticCommitmentFile: "body-corporate-small-under-50k-commitment.html",
-    showServiceCoverage: false,
+    showServiceCoverage: true,
     pdfTitle: "Commercial Cleaning Quotation - Body Corporate (Small)",
   });
 }

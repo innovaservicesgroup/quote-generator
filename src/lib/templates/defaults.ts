@@ -79,6 +79,7 @@ export function buildDefaultQuoteData(templateId: string): QuoteData {
       term: meta?.family === "lineitem" ? "One Off" : "12 Months from Commencement Date",
       noticeToReschedule: "1 Week / 48 hours",
     },
+    innovaRepresentative: "Pascal Dufroux",
   };
 
   if (meta?.family === "area") {
