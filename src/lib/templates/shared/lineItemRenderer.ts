@@ -104,7 +104,7 @@ export function renderLineItemFamilyTemplate(
     ${coverageAreasHtml}
 
     <table class="data-table">
-      <tr><th>Specification</th><th style="width:22%">Price / Service</th></tr>
+      <tr><th>Specification</th><th class="col-narrow">Price / Service</th></tr>
       ${lineItemsHtml}
     </table>
 
@@ -127,6 +127,7 @@ export function renderLineItemFamilyTemplate(
         config.staticCommitmentFile,
         { INNOVA_REP_NAME: innovaRepresentative },
         {
+          BADGE_ICON: `<img src="${assets.badgeIcon}" alt="" style="height:26px; vertical-align:middle; margin-right:6px;" />`,
           INNOVA_SIGNATURE_IMG: `<img src="${signatureImageFor(
             innovaRepresentative,
             assets

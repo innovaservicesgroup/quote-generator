@@ -124,6 +124,7 @@ export function renderHousekeepingOver50k(data: QuoteData): string {
         "housekeeping-over-50k-commitment.html",
         { INNOVA_REP_NAME: innovaRepresentative },
         {
+          BADGE_ICON: `<img src="${assets.badgeIcon}" alt="" style="height:26px; vertical-align:middle; margin-right:6px;" />`,
           INNOVA_SIGNATURE_IMG: `<img src="${signatureImageFor(
             innovaRepresentative,
             assets

@@ -99,7 +99,7 @@ export function renderAreaFamilyTemplate(
         .slice(0, 4)
         .map(
           (note) =>
-            `<tr><td style="width:8%; text-align:center;">✔</td><td>${esc(
+            `<tr><td class="checkmark-cell">✔</td><td>${esc(
               note
             )}</td></tr>`
         )
@@ -195,6 +195,7 @@ export function renderAreaFamilyTemplate(
         config.staticCommitmentFile,
         { INNOVA_REP_NAME: innovaRepresentative },
         {
+          BADGE_ICON: `<img src="${assets.badgeIcon}" alt="" style="height:26px; vertical-align:middle; margin-right:6px;" />`,
           INNOVA_SIGNATURE_IMG: `<img src="${signatureImageFor(
             innovaRepresentative,
             assets

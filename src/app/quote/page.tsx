@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { ValueBracket, QuoteData } from "@/lib/templates/shared/types";
+import { useState, useEffect, useRef } from "react";
+import { ValueBracket, QuoteData, SavedQuoteRecord } from "@/lib/templates/shared/types";
 import { getTemplate } from "@/lib/templates/registry";
 import { buildDefaultQuoteData } from "@/lib/templates/defaults";
 import StepIndicator from "@/components/wizard/StepIndicator";
@@ -10,8 +10,13 @@ import Step2Template from "@/components/wizard/Step2Template";
 import Step3ClientDetails from "@/components/wizard/Step3ClientDetails";
 import Step4Services from "@/components/wizard/Step4Services";
 import Step5Review from "@/components/wizard/Step5Review";
+import SavedQuotesList from "@/components/wizard/SavedQuotesList";
 
+// Kept as a same-device fallback so "Save for later" still does *something*
+// useful even if the shared save (Netlify Blobs, below) fails — e.g. no
+// network. The shared save is what makes a quote visible to teammates.
 const DRAFT_KEY = "innova-quote-draft";
+const SAVED_BY_KEY = "innova-quote-saved-by";
 
 interface SavedDraft {
   step: number;
@@ -28,6 +33,8 @@ export default function QuoteWizardPage() {
   const [quoteData, setQuoteData] = useState<QuoteData | null>(null);
   const [savedNotice, setSavedNotice] = useState<string | null>(null);
   const [resumePrompt, setResumePrompt] = useState<SavedDraft | null>(null);
+  const [showSavedQuotes, setShowSavedQuotes] = useState(false);
+  const draftIdRef = useRef<string | null>(null);
 
   // On first load, check for a saved draft and offer to resume it.
   useEffect(() => {
@@ -54,9 +61,11 @@ export default function QuoteWizardPage() {
     setBracket(null);
     setTemplateId(null);
     setQuoteData(null);
+    draftIdRef.current = null;
   };
 
-  const saveForLater = () => {
+  const saveForLater = async () => {
+    // Always keep the same-device fallback copy.
     try {
       const draft: SavedDraft = {
         step,
@@ -66,11 +75,54 @@ export default function QuoteWizardPage() {
         savedAt: new Date().toISOString(),
       };
       localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-      setSavedNotice("Saved — you can safely close this tab and come back later.");
-      setTimeout(() => setSavedNotice(null), 4000);
     } catch {
-      setSavedNotice("Couldn't save — your browser may be blocking storage.");
+      // ignore — the shared save below is what matters most
     }
+
+    // Ask once for a name to attribute the save to (remembered after that).
+    let savedBy = "";
+    try {
+      savedBy = localStorage.getItem(SAVED_BY_KEY) || "";
+    } catch {
+      // ignore
+    }
+    if (!savedBy) {
+      savedBy = window.prompt("Your name (so teammates know who saved this):") || "";
+      if (savedBy) {
+        try {
+          localStorage.setItem(SAVED_BY_KEY, savedBy);
+        } catch {
+          // ignore
+        }
+      }
+    }
+
+    if (!draftIdRef.current) {
+      draftIdRef.current = crypto.randomUUID();
+    }
+
+    const record: SavedQuoteRecord = {
+      id: draftIdRef.current,
+      step,
+      bracket,
+      templateId,
+      quoteData,
+      savedAt: new Date().toISOString(),
+      savedBy: savedBy || "Someone",
+    };
+
+    try {
+      const res = await fetch("/api/quotes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(record),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || "Save failed");
+      setSavedNotice("Saved — visible to the whole team. Come back anytime via \"Saved Quotes\".");
+    } catch {
+      setSavedNotice("Saved on this device only — couldn't reach shared storage.");
+    }
+    setTimeout(() => setSavedNotice(null), 5000);
   };
 
   const resumeDraft = () => {
@@ -87,6 +139,15 @@ export default function QuoteWizardPage() {
     setResumePrompt(null);
   };
 
+  const resumeSavedQuote = (record: SavedQuoteRecord) => {
+    draftIdRef.current = record.id;
+    setStep(record.step);
+    setBracket(record.bracket);
+    setTemplateId(record.templateId);
+    setQuoteData(record.quoteData);
+    setShowSavedQuotes(false);
+  };
+
   return (
     <div className="min-h-screen bg-[#fafbfc]">
       <header className="border-b border-gray-200 bg-white">
@@ -99,8 +160,16 @@ export default function QuoteWizardPage() {
           </div>
           <div className="flex items-center gap-4">
             {savedNotice && (
-              <span className="text-xs text-[#006b86] font-medium">{savedNotice}</span>
+              <span className="text-xs text-[#006b86] font-medium max-w-[220px] sm:max-w-none">
+                {savedNotice}
+              </span>
             )}
+            <button
+              onClick={() => setShowSavedQuotes(true)}
+              className="text-xs font-semibold text-[#006b86] border border-[#40aac4] rounded-lg px-3 py-1.5 hover:bg-[#40aac4]/5"
+            >
+              Saved Quotes
+            </button>
             {step > 1 && quoteData && (
               <button
                 onClick={saveForLater}
@@ -147,6 +216,13 @@ export default function QuoteWizardPage() {
       )}
 
       <main className="px-4 py-6 sm:px-6 sm:py-10">
+        {showSavedQuotes ? (
+          <SavedQuotesList
+            onResume={resumeSavedQuote}
+            onClose={() => setShowSavedQuotes(false)}
+          />
+        ) : (
+          <>
         <StepIndicator current={step} />
 
         {step === 1 && (
@@ -201,7 +277,10 @@ export default function QuoteWizardPage() {
             quoteData={quoteData}
             onChange={setQuoteData}
             onBack={() => setStep(4)}
+            onSaveForLater={saveForLater}
           />
+        )}
+          </>
         )}
       </main>
     </div>

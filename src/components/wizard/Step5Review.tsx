@@ -8,19 +8,19 @@ export default function Step5Review({
   quoteData,
   onChange,
   onBack,
+  onSaveForLater,
 }: {
   meta: TemplateMeta;
   quoteData: QuoteData;
   onChange: (d: QuoteData) => void;
   onBack: () => void;
+  onSaveForLater: () => void;
 }) {
   const [previewHtml, setPreviewHtml] = useState<string>("");
   const [loadingPreview, setLoadingPreview] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [generatingWord, setGeneratingWord] = useState(false);
-  const [emailing, setEmailing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [emailNotice, setEmailNotice] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -110,40 +110,6 @@ export default function Step5Review({
     }
   };
 
-  const handleEmailToClient = async () => {
-    setError(null);
-    setEmailNotice(null);
-    if (!quoteData.client.emailAddress.trim()) {
-      setError("Add a client email address in Step 3 before emailing the quote.");
-      return;
-    }
-    setEmailing(true);
-    try {
-      // Downloads the PDF, then opens a pre-filled email in the user's
-      // own mail app. Browsers can't attach a file to a mailto: link for
-      // security reasons, so this is a two-step "download, then attach"
-      // flow rather than a silent send.
-      await handleDownload();
-      const subject = encodeURIComponent(
-        `Cleaning Quote — ${quoteData.client.clientName || "Your business"}`
-      );
-      const body = encodeURIComponent(
-        `Hi ${quoteData.client.contactName || "there"},\n\n` +
-          `Please find attached your commercial cleaning quote from Innova Services Group.\n\n` +
-          `The PDF has just downloaded to your computer — attach it to this email before sending.\n\n` +
-          `Kind regards,\nInnova Services Group`
-      );
-      window.location.href = `mailto:${quoteData.client.emailAddress}?subject=${subject}&body=${body}`;
-      setEmailNotice(
-        "PDF downloaded and your email app should now be open — attach the downloaded file before sending."
-      );
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setEmailing(false);
-    }
-  };
-
   const updateAreaPricing = (patch: Partial<NonNullable<QuoteData["area"]>["pricing"]>) => {
     if (!quoteData.area) return;
     onChange({
@@ -172,11 +138,6 @@ export default function Step5Review({
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 mb-4">
           {error}
-        </div>
-      )}
-      {emailNotice && (
-        <div className="bg-blue-50 border border-blue-200 text-blue-700 text-sm rounded-lg px-4 py-3 mb-4">
-          {emailNotice}
         </div>
       )}
 
@@ -291,22 +252,21 @@ export default function Step5Review({
         </button>
         <div className="flex flex-col sm:flex-row gap-3 order-1 sm:order-2 sm:ml-auto">
           <button
-            onClick={handleEmailToClient}
-            disabled={emailing || generating || generatingWord}
-            className="border border-[#40aac4] text-[#006b86] disabled:opacity-50 text-sm font-semibold px-6 py-3 rounded-lg hover:bg-[#40aac4]/5 transition-colors"
+            onClick={onSaveForLater}
+            className="border border-[#40aac4] text-[#006b86] text-sm font-semibold px-6 py-3 rounded-lg hover:bg-[#40aac4]/5 transition-colors"
           >
-            {emailing ? "Preparing email…" : "Email Quote to Client"}
+            Save for Later
           </button>
           <button
             onClick={handleDownloadWord}
-            disabled={generating || emailing || generatingWord}
+            disabled={generating || generatingWord}
             className="border border-[#40aac4] text-[#006b86] disabled:opacity-50 text-sm font-semibold px-6 py-3 rounded-lg hover:bg-[#40aac4]/5 transition-colors"
           >
             {generatingWord ? "Generating Word…" : "Download Word"}
           </button>
           <button
             onClick={handleDownload}
-            disabled={generating || emailing || generatingWord}
+            disabled={generating || generatingWord}
             className="bg-[#40aac4] disabled:bg-gray-300 text-white text-sm font-semibold px-6 py-3 rounded-lg hover:bg-[#369ab3] transition-colors"
           >
             {generating ? "Generating PDF…" : "Download PDF"}

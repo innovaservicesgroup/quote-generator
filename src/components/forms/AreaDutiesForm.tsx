@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import {
   AreaFamilyData,
   DutyArea,
@@ -8,6 +9,8 @@ import {
 } from "@/lib/templates/shared/types";
 import { TemplateMeta } from "@/lib/templates/shared/types";
 import { COMMON_TASKS, COMMON_COVERAGE_NOTES } from "@/lib/templates/data/commonTasks";
+
+const CUSTOM_OPTION = "__custom__";
 
 const FREQUENCY_OPTIONS = [
   "Daily",
@@ -27,10 +30,44 @@ export default function AreaDutiesForm({
   data: AreaFamilyData;
   onChange: (d: AreaFamilyData) => void;
 }) {
+  const coverageInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
+  const taskInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
   const updateArea = (id: string, patch: Partial<DutyArea>) => {
     onChange({
       ...data,
       areas: data.areas.map((a) => (a.id === id ? { ...a, ...patch } : a)),
+    });
+  };
+
+  const updateAreaTask = (areaId: string, taskIndex: number, value: string) => {
+    onChange({
+      ...data,
+      areas: data.areas.map((a) =>
+        a.id === areaId
+          ? { ...a, tasks: a.tasks.map((t, i) => (i === taskIndex ? value : t)) }
+          : a
+      ),
+    });
+  };
+
+  const addAreaTask = (areaId: string) => {
+    onChange({
+      ...data,
+      areas: data.areas.map((a) =>
+        a.id === areaId ? { ...a, tasks: [...a.tasks, ""] } : a
+      ),
+    });
+  };
+
+  const removeAreaTask = (areaId: string, taskIndex: number) => {
+    onChange({
+      ...data,
+      areas: data.areas.map((a) =>
+        a.id === areaId
+          ? { ...a, tasks: a.tasks.filter((_, i) => i !== taskIndex) }
+          : a
+      ),
     });
   };
 
@@ -169,6 +206,9 @@ export default function AreaDutiesForm({
           {data.serviceCoverageNotes.map((note, i) => (
             <div key={i} className="flex flex-col sm:flex-row gap-2">
               <input
+                ref={(el) => {
+                  coverageInputRefs.current[i] = el;
+                }}
                 value={note}
                 onChange={(e) => updateCoverageNote(i, e.target.value)}
                 placeholder="Type a coverage line, or pick one →"
@@ -177,12 +217,17 @@ export default function AreaDutiesForm({
               <select
                 value=""
                 onChange={(e) => {
+                  if (e.target.value === CUSTOM_OPTION) {
+                    coverageInputRefs.current[i]?.focus();
+                    return;
+                  }
                   if (e.target.value) updateCoverageNote(i, e.target.value);
                 }}
                 className="rounded-lg border border-gray-300 px-2 py-2 text-sm text-gray-500 sm:w-56"
-                title="Quick-fill from common coverage lines"
+                title="Quick-fill from common coverage lines, or type your own"
               >
                 <option value="">Quick pick…</option>
+                <option value={CUSTOM_OPTION}>✏️ Custom (type your own)</option>
                 {COMMON_COVERAGE_NOTES.map((c) => (
                   <option key={c} value={c}>
                     {c}
@@ -206,8 +251,8 @@ export default function AreaDutiesForm({
         </h3>
         <p className="text-xs text-gray-500 mb-3">
           {meta.areasToggleable
-            ? "Toggle off any area that doesn't apply to this site, and set the cleaning frequency for each area you keep. Task wording is fixed, professionally-written scope language."
-            : "All areas are included on this template. Set the cleaning frequency for each."}
+            ? "Toggle off any area that doesn't apply to this site, and set the cleaning frequency for each area you keep. Task wording starts as professionally-written scope language — edit, remove, or add lines as needed for this site."
+            : "All areas are included on this template. Set the cleaning frequency for each, and edit the task wording if this site needs something different."}
         </p>
         <div className="space-y-2">
           {data.areas.map((area) => (
@@ -246,18 +291,34 @@ export default function AreaDutiesForm({
                 </select>
               </div>
               {area.included && (
-                <ul className="px-4 py-2 text-xs text-gray-500 list-disc list-inside space-y-0.5">
-                  {area.tasks.slice(0, 3).map((t, i) => (
-                    <li key={i} className="truncate">
-                      {t}
-                    </li>
+                <div className="px-3 py-2.5 space-y-1.5">
+                  {area.tasks.map((t, i) => (
+                    <div key={i} className="flex gap-2">
+                      <input
+                        ref={(el) => {
+                          taskInputRefs.current[`${area.id}:${i}`] = el;
+                        }}
+                        value={t}
+                        onChange={(e) => updateAreaTask(area.id, i, e.target.value)}
+                        placeholder="Task wording…"
+                        className="flex-1 rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm focus:outline-none focus:border-[#40aac4]"
+                      />
+                      <button
+                        onClick={() => removeAreaTask(area.id, i)}
+                        className="text-gray-400 hover:text-red-500 text-base px-2"
+                        title="Remove this line"
+                      >
+                        ✕
+                      </button>
+                    </div>
                   ))}
-                  {area.tasks.length > 3 && (
-                    <li className="text-gray-400">
-                      +{area.tasks.length - 3} more task(s) included in the PDF
-                    </li>
-                  )}
-                </ul>
+                  <button
+                    onClick={() => addAreaTask(area.id)}
+                    className="text-xs text-[#006b86] font-semibold hover:underline"
+                  >
+                    + Add line
+                  </button>
+                </div>
               )}
             </div>
           ))}
@@ -311,6 +372,9 @@ export default function AreaDutiesForm({
                   >
                     <div className="flex flex-col sm:flex-row gap-2">
                       <input
+                        ref={(el) => {
+                          taskInputRefs.current[t.id] = el;
+                        }}
                         value={t.task}
                         onChange={(e) =>
                           updateTask(section.id, t.id, { task: e.target.value })
@@ -321,14 +385,19 @@ export default function AreaDutiesForm({
                       <select
                         value=""
                         onChange={(e) => {
+                          if (e.target.value === CUSTOM_OPTION) {
+                            taskInputRefs.current[t.id]?.focus();
+                            return;
+                          }
                           if (e.target.value) {
                             updateTask(section.id, t.id, { task: e.target.value });
                           }
                         }}
                         className="rounded-lg border border-gray-300 px-2 py-2 text-sm text-gray-500 sm:w-40"
-                        title="Quick-fill from common tasks"
+                        title="Quick-fill from common tasks, or type your own"
                       >
                         <option value="">Quick pick…</option>
+                        <option value={CUSTOM_OPTION}>✏️ Custom</option>
                         {COMMON_TASKS.map((task) => (
                           <option key={task} value={task}>
                             {task}

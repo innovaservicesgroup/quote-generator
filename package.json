@@ -9,8 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@netlify/blobs": "^10.7.12",
     "@netlify/plugin-nextjs": "^5.15.13",
-    "@sparticuz/chromium": "^149.0.0",
+    "@sparticuz/chromium-min": "^149.0.0",
     "autoprefixer": "^10",
     "html-to-docx": "^1.8.0",
     "next": "16.2.12",

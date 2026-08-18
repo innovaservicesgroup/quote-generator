@@ -8,7 +8,7 @@ export function renderMedicalCentreUnder50k(data: QuoteData): string {
     <table class="data-table">
       ${MEDICAL_CENTRE_APPROACH.map(
         (item) =>
-          `<tr><td style="width:8%; text-align:center;">✔</td><td>${item}</td></tr>`
+          `<tr><td class="checkmark-cell">✔</td><td>${item}</td></tr>`
       ).join("")}
     </table>`;
 

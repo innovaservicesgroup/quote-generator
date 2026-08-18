@@ -39,7 +39,7 @@ export interface DutyArea {
   name: string;
   frequency: string; // filled in per quote, e.g. "Weekly"
   included: boolean; // toggled on/off in the wizard when areasToggleable
-  tasks: string[]; // fixed, pre-written task descriptions (not user-edited)
+  tasks: string[]; // starts pre-written per area, but fully editable in the wizard
 }
 
 export interface AdditionalServiceRow {
@@ -142,4 +142,19 @@ export interface QuoteData {
   area?: AreaFamilyData;
   lineitem?: LineItemFamilyData;
   roomrate?: RoomRateFamilyData;
+}
+
+// ---- Saved quotes (shared "Save for Later" across the team) ----
+
+/** A quote draft saved server-side (Netlify Blobs) so any staff member can
+ *  find and resume it, not just the person who saved it on their own
+ *  browser. */
+export interface SavedQuoteRecord {
+  id: string;
+  step: number;
+  bracket: ValueBracket | null;
+  templateId: string | null;
+  quoteData: QuoteData | null;
+  savedAt: string; // ISO timestamp
+  savedBy: string; // free-text name typed at save time — no login system
 }

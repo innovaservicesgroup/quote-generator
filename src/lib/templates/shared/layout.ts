@@ -12,7 +12,13 @@ export const BRAND = {
   white: "#ffffff",
 };
 
-let _cache: { logo?: string; badge?: string; signaturePascal?: string; signatureCelia?: string } = {};
+let _cache: {
+  logo?: string;
+  badge?: string;
+  badgeIcon?: string;
+  signaturePascal?: string;
+  signatureCelia?: string;
+} = {};
 
 function toDataUri(fileName: string): string {
   const filePath = path.join(process.cwd(), "public", "brand", fileName);
@@ -23,11 +29,13 @@ function toDataUri(fileName: string): string {
 export function getBrandAssets() {
   if (!_cache.logo) _cache.logo = toDataUri("logo-dark.png");
   if (!_cache.badge) _cache.badge = toDataUri("badge.png");
+  if (!_cache.badgeIcon) _cache.badgeIcon = toDataUri("badge-icon.png");
   if (!_cache.signaturePascal) _cache.signaturePascal = toDataUri("signature-pascal.png");
   if (!_cache.signatureCelia) _cache.signatureCelia = toDataUri("signature-celia.png");
   return {
     logo: _cache.logo!,
     badge: _cache.badge!,
+    badgeIcon: _cache.badgeIcon!,
     signaturePascal: _cache.signaturePascal!,
     signatureCelia: _cache.signatureCelia!,
   };
@@ -102,6 +110,8 @@ export const sharedStyles = `
     width: 28%;
     background: #f7f7f7;
   }
+  .checkmark-cell { width: 8%; text-align: center; }
+  .col-narrow { width: 22%; }
   table.data-table th {
     background: ${BRAND.headerTeal};
     color: #fff;
@@ -175,18 +185,106 @@ export const sharedStyles = `
     font-size: 9.5px;
   }
   .legal-doc table thead tr:first-child th { background: ${BRAND.headerTeal}; color: #fff; font-weight: 700; }
-  .legal-doc ol { padding-left: 22px; margin: 6px 0; }
-  .legal-doc ol > li { margin-bottom: 8px; }
+  /* Multi-level clause numbering (1 / 1.1 / (a) / (i)), matching the Word
+     template's outline numbering and the in-body cross-references like
+     "clause 14.2" or "Item 4". Native <ol>/<li> markers are replaced with
+     generated counters so nested lists compound correctly instead of each
+     one restarting at "1."/"a." on its own. */
+  .legal-doc ol { list-style: none; margin: 6px 0; padding: 0; }
+  /* Reference Schedule table uses a bare <ol><li></li></ol> per row just to
+     print the Item number in the left column - restore native numbering
+     there since it's outside the clause-numbering scheme above. */
+  .legal-doc table ol { list-style: decimal; padding-left: 14px; margin: 0; }
+  .legal-doc table ol > li::before { content: none; }
+  .legal-doc ol > li { position: relative; margin-bottom: 8px; }
   .legal-doc ol > li > p:first-child strong { color: ${BRAND.headingTeal}; }
-  .legal-doc ol ol { padding-left: 24px; margin: 4px 0; }
-  .legal-doc ol ol > li { margin-bottom: 5px; }
   .legal-doc li > p { margin: 0 0 4px 0; }
-  .legal-doc blockquote { margin: 4px 0 4px 14px; padding-left: 10px; border-left: 2px solid #ddd; color: #333; }
+
+  /* Level 1 - top-level clauses: "1." "2." ... Uses the native counter so
+     start="" attributes (continuing the sequence after the plain 19.1/20.1
+     paragraphs below) keep working automatically. */
+  .legal-doc > ol { margin: 10px 0; }
+  .legal-doc > ol > li { padding-left: 26px; margin-bottom: 10px; }
+  .legal-doc > ol > li::before {
+    content: counter(list-item) ".";
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-weight: 700;
+    color: ${BRAND.headingTeal};
+  }
+
+  /* Level 2 - sub-clauses nested one level in: "1.1." "1.2." (compound of
+     parent + own position, via counters()). */
+  .legal-doc li ol[type="1"] { margin: 4px 0; }
+  .legal-doc li ol[type="1"] > li { padding-left: 42px; margin-bottom: 6px; }
+  .legal-doc li ol[type="1"] > li::before {
+    content: counters(list-item, ".") ".";
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-weight: 600;
+  }
+
+  /* Level 3 - lettered sub-points: "(a)" "(b)" */
+  .legal-doc ol[type="a"] { padding-left: 42px; margin: 4px 0; }
+  .legal-doc ol[type="a"] > li { padding-left: 22px; margin-bottom: 5px; }
+  .legal-doc ol[type="a"] > li::before {
+    content: "(" counter(list-item, lower-alpha) ")";
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+
+  /* Level 4 - roman-numeral sub-points: "(i)" "(ii)" */
+  .legal-doc ol[type="i"] { padding-left: 58px; margin: 4px 0; }
+  .legal-doc ol[type="i"] > li { padding-left: 26px; margin-bottom: 5px; }
+  .legal-doc ol[type="i"] > li::before {
+    content: "(" counter(list-item, lower-roman) ")";
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+
+  /* Word's deeper-indented paragraphs came through pandoc as <blockquote>.
+     They're indented body text, not quotations, so drop the quote-style
+     left rule and just align them under their level. */
+  .legal-doc blockquote { margin: 0 0 4px 0; padding: 0; border-left: none; color: inherit; }
+  .legal-doc > ol > blockquote { margin: 4px 0 8px 26px; color: #333; }
+  .legal-doc > ol + p, .legal-doc > ol + blockquote { margin: 4px 0 12px 42px; color: #333; }
   .legal-doc u { text-decoration: underline; color: ${BRAND.headingTeal}; }
   .commitment-doc { font-size: 10.5px; }
   .commitment-doc > p:first-child { color: ${BRAND.headingTeal}; font-size: 13px; font-weight: 700; }
   .commitment-doc table { width: 100%; border-collapse: collapse; margin-top: 10px; }
   .commitment-doc table th { border: 1px solid #999; padding: 6px 8px; text-align: left; font-weight: 700; background: #f7f7f7; width: 26%; }
+
+  /* "COMMERCIAL CLEANING SERVICES CONTRACT" divider — always starts its own
+     page (it introduces the Terms & Conditions that follow), styled as a
+     deliberate title page rather than a stray trailing line. */
+  .contract-divider {
+    page-break-before: always;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 70vh;
+  }
+  .contract-divider-title {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    color: ${BRAND.headingTeal};
+    margin: 0 0 10px 0;
+  }
+  .contract-divider-sub {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: ${BRAND.darkSlate};
+    margin: 0;
+  }
 `;
 
 export function loadStaticPartial(
