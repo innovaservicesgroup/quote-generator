@@ -1,7 +1,7 @@
-import { DutyArea } from "../shared/types";
+import { DutyAreaTemplate } from "../shared/types";
 
 // "Body Corporate (Small) - Over $50k" — verbatim from Innova's Word template.
-export const BODY_CORP_SMALL_AREAS: Omit<DutyArea, "frequency" | "included">[] = [
+export const BODY_CORP_SMALL_AREAS: DutyAreaTemplate[] = [
   {
     id: "general",
     name: "General",
@@ -31,7 +31,7 @@ export const BODY_CORP_SMALL_AREAS: Omit<DutyArea, "frequency" | "included">[] =
 ];
 
 // "Body Corporate (Medium to Large) - Over $50k" — verbatim.
-export const BODY_CORP_MED_LARGE_OVER_50K_AREAS: Omit<DutyArea, "frequency" | "included">[] = [
+export const BODY_CORP_MED_LARGE_OVER_50K_AREAS: DutyAreaTemplate[] = [
   {
     id: "main-entrance-external",
     name: "Main Entrance (external)",
@@ -112,7 +112,7 @@ export const BODY_CORP_MED_LARGE_OVER_50K_AREAS: Omit<DutyArea, "frequency" | "i
 ];
 
 // "Body Corporate (Medium to Large) - Under $50k" — verbatim.
-export const BODY_CORP_MED_LARGE_UNDER_50K_AREAS: Omit<DutyArea, "frequency" | "included">[] = [
+export const BODY_CORP_MED_LARGE_UNDER_50K_AREAS: DutyAreaTemplate[] = [
   {
     id: "main-entrance-external",
     name: "Main Entrance (external)",

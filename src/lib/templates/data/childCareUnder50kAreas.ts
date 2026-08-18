@@ -1,9 +1,9 @@
-import { DutyArea } from "../shared/types";
+import { DutyAreaTemplate } from "../shared/types";
 
 // "Standard Child Care - Under $50k" — verbatim from Innova's Word
 // template. Genuinely different wording/area grouping from the Over
 // $50k version, not just a smaller copy.
-export const CHILD_CARE_UNDER_50K_AREAS: Omit<DutyArea, "frequency" | "included">[] = [
+export const CHILD_CARE_UNDER_50K_AREAS: DutyAreaTemplate[] = [
   {
     id: "entrance-area",
     name: "Entrance Area",

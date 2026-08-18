@@ -1,8 +1,8 @@
-import { DutyArea } from "../shared/types";
+import { DutyAreaTemplate } from "../shared/types";
 
 // "Office - Under $50k" — a smaller-scope variant of the Office
 // template, verbatim from Innova's Word template.
-export const OFFICE_UNDER_50K_AREAS: Omit<DutyArea, "frequency" | "included">[] = [
+export const OFFICE_UNDER_50K_AREAS: DutyAreaTemplate[] = [
   {
     id: "main-entrance",
     name: "Main Entrance",

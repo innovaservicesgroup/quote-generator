@@ -1,4 +1,4 @@
-import { DutyArea } from "../shared/types";
+import { DutyAreaTemplate } from "../shared/types";
 
 // The task wording below is copied verbatim from Innova's existing
 // "Office - Over $50k" Word template. It is fixed, professionally
@@ -8,7 +8,7 @@ import { DutyArea } from "../shared/types";
 // This file is pure data (no Node built-ins) so it is safe to import
 // from both client components (the wizard) and server code (the
 // renderer / PDF route).
-export const OFFICE_OVER_50K_AREAS: Omit<DutyArea, "frequency" | "included">[] = [
+export const OFFICE_OVER_50K_AREAS: DutyAreaTemplate[] = [
   {
     id: "main-entrance",
     name: "Main Entrance",
