@@ -42,15 +42,39 @@ export function renderAreaFamilyTemplate(
 
   const includedAreas = area.areas.filter((a) => a.included);
 
+  // Group each area's tasks into rows by effective frequency (task's own
+  // override, falling back to the area's main frequency), preserving
+  // order. Consecutive same-frequency tasks share one bulleted row, same
+  // as before; a task with a different frequency (e.g. a weekly
+  // high-pressure wash on an otherwise daily area) gets its own row.
+  function groupTasksByFrequency(a: (typeof includedAreas)[number]) {
+    const groups: { frequency: string; tasks: string[] }[] = [];
+    for (const t of a.tasks) {
+      const freq = t.frequency || a.frequency;
+      const last = groups[groups.length - 1];
+      if (last && last.frequency === freq) {
+        last.tasks.push(t.text);
+      } else {
+        groups.push({ frequency: freq, tasks: [t.text] });
+      }
+    }
+    return groups;
+  }
+
   const areasHtml = includedAreas
     .map(
       (a) => `
     <table class="area-block">
       <tr><td colspan="2" class="area-name">${esc(a.name)}</td></tr>
-      <tr><th class="freq">Frequency</th><th>Included</th></tr>
-      <tr><td class="freq">${esc(a.frequency) || "&nbsp;"}</td><td><ul class="task-list">${a.tasks
-        .map((t) => `<li>${esc(t)}</li>`)
-        .join("")}</ul></td></tr>
+      <tr><th class="freq">Frequency</th><th>Task</th></tr>
+      ${groupTasksByFrequency(a)
+        .map(
+          (g) =>
+            `<tr><td class="freq">${esc(g.frequency) || "&nbsp;"}</td><td><ul class="task-list">${g.tasks
+              .map((text) => `<li>${esc(text)}</li>`)
+              .join("")}</ul></td></tr>`
+        )
+        .join("")}
     </table>`
     )
     .join("\n");

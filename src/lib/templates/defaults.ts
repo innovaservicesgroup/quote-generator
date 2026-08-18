@@ -89,6 +89,11 @@ export function buildDefaultQuoteData(templateId: string): QuoteData {
         ...a,
         frequency: "",
         included: true,
+        tasks: a.tasks.map((text, i) => ({
+          id: `${a.id}-t${i}`,
+          text,
+          frequency: "", // "" = use the area's main frequency above
+        })),
       })),
       additionalServices: [],
       consumables: [],

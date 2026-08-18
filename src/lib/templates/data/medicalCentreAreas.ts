@@ -1,7 +1,7 @@
-import { DutyArea } from "../shared/types";
+import { DutyAreaTemplate } from "../shared/types";
 
 // "Medical Centre - Over $50k" — verbatim from Innova's Word template.
-export const MEDICAL_CENTRE_AREAS: Omit<DutyArea, "frequency" | "included">[] = [
+export const MEDICAL_CENTRE_AREAS: DutyAreaTemplate[] = [
   {
     id: "entrance-area",
     name: "Entrance Area",

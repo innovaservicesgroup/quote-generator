@@ -1,0 +1,14 @@
+{
+  "name": "Innova Quote Generator",
+  "short_name": "Innova Quotes",
+  "description": "Generate commercial cleaning quotes on the go",
+  "start_url": "/quote",
+  "display": "standalone",
+  "background_color": "#fafbfc",
+  "theme_color": "#006b86",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

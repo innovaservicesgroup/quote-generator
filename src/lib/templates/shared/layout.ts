@@ -1,5 +1,11 @@
-import fs from "fs";
-import path from "path";
+import {
+  logoDataUri,
+  badgeDataUri,
+  badgeIconDataUri,
+  signaturePascalDataUri,
+  signatureCeliaDataUri,
+} from "./brandAssets";
+import { STATIC_PARTIALS } from "./staticPartials";
 
 // Colors extracted directly from Innova's existing Word templates
 // (word/theme + w:fill / w:color values in document.xml).
@@ -12,32 +18,13 @@ export const BRAND = {
   white: "#ffffff",
 };
 
-let _cache: {
-  logo?: string;
-  badge?: string;
-  badgeIcon?: string;
-  signaturePascal?: string;
-  signatureCelia?: string;
-} = {};
-
-function toDataUri(fileName: string): string {
-  const filePath = path.join(process.cwd(), "public", "brand", fileName);
-  const buf = fs.readFileSync(filePath);
-  return `data:image/png;base64,${buf.toString("base64")}`;
-}
-
 export function getBrandAssets() {
-  if (!_cache.logo) _cache.logo = toDataUri("logo-dark.png");
-  if (!_cache.badge) _cache.badge = toDataUri("badge.png");
-  if (!_cache.badgeIcon) _cache.badgeIcon = toDataUri("badge-icon.png");
-  if (!_cache.signaturePascal) _cache.signaturePascal = toDataUri("signature-pascal.png");
-  if (!_cache.signatureCelia) _cache.signatureCelia = toDataUri("signature-celia.png");
   return {
-    logo: _cache.logo!,
-    badge: _cache.badge!,
-    badgeIcon: _cache.badgeIcon!,
-    signaturePascal: _cache.signaturePascal!,
-    signatureCelia: _cache.signatureCelia!,
+    logo: logoDataUri,
+    badge: badgeDataUri,
+    badgeIcon: badgeIconDataUri,
+    signaturePascal: signaturePascalDataUri,
+    signatureCelia: signatureCeliaDataUri,
   };
 }
 
@@ -292,15 +279,18 @@ export function loadStaticPartial(
   replacements: Record<string, string> = {},
   rawReplacements: Record<string, string> = {}
 ): string {
-  const filePath = path.join(process.cwd(), "src", "lib", "templates", "static", fileName);
-  let html = fs.readFileSync(filePath, "utf-8");
+  const html = STATIC_PARTIALS[fileName];
+  if (html === undefined) {
+    throw new Error(`Unknown static partial: ${fileName}`);
+  }
+  let result = html;
   for (const [key, value] of Object.entries(replacements)) {
-    html = html.split(`{{${key}}}`).join(escapeHtml(value));
+    result = result.split(`{{${key}}}`).join(escapeHtml(value));
   }
   for (const [key, value] of Object.entries(rawReplacements)) {
-    html = html.split(`{{${key}}}`).join(value);
+    result = result.split(`{{${key}}}`).join(value);
   }
-  return html;
+  return result;
 }
 
 export function escapeHtml(str: string): string {

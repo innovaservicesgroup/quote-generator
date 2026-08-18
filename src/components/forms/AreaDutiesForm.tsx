@@ -40,12 +40,23 @@ export default function AreaDutiesForm({
     });
   };
 
-  const updateAreaTask = (areaId: string, taskIndex: number, value: string) => {
+  const updateAreaTaskText = (areaId: string, taskId: string, value: string) => {
     onChange({
       ...data,
       areas: data.areas.map((a) =>
         a.id === areaId
-          ? { ...a, tasks: a.tasks.map((t, i) => (i === taskIndex ? value : t)) }
+          ? { ...a, tasks: a.tasks.map((t) => (t.id === taskId ? { ...t, text: value } : t)) }
+          : a
+      ),
+    });
+  };
+
+  const updateAreaTaskFrequency = (areaId: string, taskId: string, value: string) => {
+    onChange({
+      ...data,
+      areas: data.areas.map((a) =>
+        a.id === areaId
+          ? { ...a, tasks: a.tasks.map((t) => (t.id === taskId ? { ...t, frequency: value } : t)) }
           : a
       ),
     });
@@ -55,17 +66,25 @@ export default function AreaDutiesForm({
     onChange({
       ...data,
       areas: data.areas.map((a) =>
-        a.id === areaId ? { ...a, tasks: [...a.tasks, ""] } : a
+        a.id === areaId
+          ? {
+              ...a,
+              tasks: [
+                ...a.tasks,
+                { id: crypto.randomUUID(), text: "", frequency: "" },
+              ],
+            }
+          : a
       ),
     });
   };
 
-  const removeAreaTask = (areaId: string, taskIndex: number) => {
+  const removeAreaTask = (areaId: string, taskId: string) => {
     onChange({
       ...data,
       areas: data.areas.map((a) =>
         a.id === areaId
-          ? { ...a, tasks: a.tasks.filter((_, i) => i !== taskIndex) }
+          ? { ...a, tasks: a.tasks.filter((t) => t.id !== taskId) }
           : a
       ),
     });
@@ -292,20 +311,37 @@ export default function AreaDutiesForm({
               </div>
               {area.included && (
                 <div className="px-3 py-2.5 space-y-1.5">
-                  {area.tasks.map((t, i) => (
-                    <div key={i} className="flex gap-2">
+                  {area.tasks.map((t) => (
+                    <div key={t.id} className="flex flex-col sm:flex-row gap-2">
                       <input
                         ref={(el) => {
-                          taskInputRefs.current[`${area.id}:${i}`] = el;
+                          taskInputRefs.current[t.id] = el;
                         }}
-                        value={t}
-                        onChange={(e) => updateAreaTask(area.id, i, e.target.value)}
+                        value={t.text}
+                        onChange={(e) =>
+                          updateAreaTaskText(area.id, t.id, e.target.value)
+                        }
                         placeholder="Task wording…"
                         className="flex-1 rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm focus:outline-none focus:border-[#40aac4]"
                       />
+                      <select
+                        value={t.frequency}
+                        onChange={(e) =>
+                          updateAreaTaskFrequency(area.id, t.id, e.target.value)
+                        }
+                        title="Leave as 'Same as area' unless this task runs on a different schedule"
+                        className="text-sm border border-gray-300 rounded-lg px-2 py-1.5 text-gray-600 sm:w-40"
+                      >
+                        <option value="">Same as area</option>
+                        {FREQUENCY_OPTIONS.map((f) => (
+                          <option key={f} value={f}>
+                            {f}
+                          </option>
+                        ))}
+                      </select>
                       <button
-                        onClick={() => removeAreaTask(area.id, i)}
-                        className="text-gray-400 hover:text-red-500 text-base px-2"
+                        onClick={() => removeAreaTask(area.id, t.id)}
+                        className="text-gray-400 hover:text-red-500 text-base px-2 self-start sm:self-auto"
                         title="Remove this line"
                       >
                         ✕
@@ -318,6 +354,11 @@ export default function AreaDutiesForm({
                   >
                     + Add line
                   </button>
+                  <p className="text-[11px] text-gray-400">
+                    Most tasks follow the area's frequency above ({area.frequency || "not set"}).
+                    Only change a line's dropdown if it runs on a different schedule — e.g.
+                    daily sweeping but a weekly high-pressure wash.
+                  </p>
                 </div>
               )}
             </div>

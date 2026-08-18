@@ -34,12 +34,34 @@ export interface ClientDetails {
 
 // ---- Family A: area-based duty schedule ----
 
+/** A single task line within a duty area. */
+export interface DutyTask {
+  id: string;
+  text: string;
+  /** Empty string means "use the area's main frequency" (below). Only set
+   *  this when a task needs a different cadence than the rest of the area
+   *  — e.g. "High-pressure wash" once a week on an area that's otherwise
+   *  cleaned daily. */
+  frequency: string;
+}
+
 export interface DutyArea {
   id: string;
   name: string;
-  frequency: string; // filled in per quote, e.g. "Weekly"
+  frequency: string; // filled in per quote, e.g. "Weekly" — the area's main/default cadence
   included: boolean; // toggled on/off in the wizard when areasToggleable
-  tasks: string[]; // starts pre-written per area, but fully editable in the wizard
+  tasks: DutyTask[]; // starts pre-written per area, but fully editable in the wizard
+}
+
+/** Raw, hand-authored area definition — the shape used in the files under
+ *  src/lib/templates/data/*.ts. Tasks are plain strings here; they get
+ *  converted into DutyTask objects (stable ids, blank per-task frequency
+ *  override) when a new quote is created from the template, in
+ *  buildDefaultQuoteData(). */
+export interface DutyAreaTemplate {
+  id: string;
+  name: string;
+  tasks: string[];
 }
 
 export interface AdditionalServiceRow {
