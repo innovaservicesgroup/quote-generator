@@ -44,25 +44,24 @@ export const sharedStyles = `
   }
   .page {
     padding: 28px 36px 60px 36px;
-    position: relative;
-    min-height: 100vh;
   }
-  .doc-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
+  .doc-header-table { width: 100%; border-collapse: collapse; margin-bottom: 18px; }
+  .doc-header-table td {
+    border: none;
     border-bottom: 2px solid ${BRAND.headerTeal};
-    padding-bottom: 10px;
-    margin-bottom: 18px;
+    padding: 0 0 10px 0;
+    vertical-align: top;
   }
-  .doc-header img { height: 46px; }
-  .doc-header .company-info {
+  .doc-header-table .dh-logo { width: 50%; }
+  .doc-header-table .dh-logo img { height: 46px; }
+  .doc-header-table .dh-info {
+    width: 50%;
     text-align: right;
     color: ${BRAND.headingTeal};
     font-size: 9.5px;
     line-height: 1.6;
   }
-  .doc-header .company-info strong { color: #1a1a1a; font-size: 10.5px; }
+  .doc-header-table .dh-info strong { color: #1a1a1a; font-size: 10.5px; }
   h1.doc-title {
     text-align: center;
     font-size: 15px;
@@ -138,20 +137,22 @@ export const sharedStyles = `
   .pricing-table td.label { font-weight: 700; width: 40%; background: #f7f7f7; }
   .pricing-table td { border: 1px solid #999; padding: 8px; }
   .note { font-size: 9.5px; color: #555; margin: 6px 0; }
-  .footer-band {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 34px;
-    background: linear-gradient(90deg, ${BRAND.headerTeal}22, ${BRAND.headerTeal}55);
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding-right: 16px;
+  /* Footer badge band — a plain table row in normal document flow rather
+     than absolutely-positioned + gradient-filled. Word has no concept of
+     CSS position:absolute or linear-gradient(); using those (previously)
+     meant this band silently disappeared in the Word export, and may have
+     contributed to the "unreadable content" corruption warning some users
+     saw. A table with a solid background colour is natively understood by
+     both the PDF renderer and the Word converter. */
+  .footer-band-table { width: 100%; border-collapse: collapse; margin-top: 18px; }
+  .footer-band-table .fb-cell {
+    border: none;
+    background: #dcf0f4;
+    text-align: right;
+    padding: 8px 16px;
   }
-  .footer-band img { height: 26px; margin-right: 8px; }
-  .footer-band span { font-size: 9px; color: ${BRAND.headingTeal}; font-weight: 700; }
+  .footer-band-table img { height: 22px; vertical-align: middle; margin-right: 8px; }
+  .footer-band-table span { font-size: 9px; color: ${BRAND.headingTeal}; font-weight: 700; vertical-align: middle; }
   .page-break { page-break-before: always; }
   ul.tight { margin: 4px 0; padding-left: 18px; }
 
@@ -174,71 +175,51 @@ export const sharedStyles = `
   .legal-doc table thead tr:first-child th { background: ${BRAND.headerTeal}; color: #fff; font-weight: 700; }
   /* Multi-level clause numbering (1 / 1.1 / (a) / (i)), matching the Word
      template's outline numbering and the in-body cross-references like
-     "clause 14.2" or "Item 4". Native <ol>/<li> markers are replaced with
-     generated counters so nested lists compound correctly instead of each
-     one restarting at "1."/"a." on its own. */
-  .legal-doc ol { list-style: none; margin: 6px 0; padding: 0; }
-  /* Reference Schedule table uses a bare <ol><li></li></ol> per row just to
-     print the Item number in the left column - restore native numbering
-     there since it's outside the clause-numbering scheme above. */
-  .legal-doc table ol { list-style: decimal; padding-left: 14px; margin: 0; }
-  .legal-doc table ol > li::before { content: none; }
-  .legal-doc ol > li { position: relative; margin-bottom: 8px; }
-  .legal-doc ol > li > p:first-child strong { color: ${BRAND.headingTeal}; }
-  .legal-doc li > p { margin: 0 0 4px 0; }
+     "clause 14.2" or "Item 4".
 
-  /* Level 1 - top-level clauses: "1." "2." ... Uses the native counter so
-     start="" attributes (continuing the sequence after the plain 19.1/20.1
-     paragraphs below) keep working automatically. */
-  .legal-doc > ol { margin: 10px 0; }
-  .legal-doc > ol > li { padding-left: 26px; margin-bottom: 10px; }
-  .legal-doc > ol > li::before {
-    content: counter(list-item) ".";
-    position: absolute;
-    left: 0;
-    top: 0;
+     IMPORTANT: the actual "1." / "1.1." / "(a)" / "(i)" marker text below
+     is literal text baked into the HTML (see the generated *-terms.html
+     files) as the first inline word of each clause's opening paragraph —
+     NOT CSS-generated content, and not laid out via flexbox. That's
+     deliberate: this same HTML also gets converted to a Word document
+     (via html-to-docx for the "Download Word" button), and Word has no
+     concept of CSS ::before / counter() content or flexbox — it can only
+     show text that's actually in the document, flowing normally. The
+     numbers looked correct in the PDF but were entirely missing in Word.
+     Baking them in as real inline text means both exports show the same
+     correct numbering with zero special layout needed. This CSS just
+     handles indent/styling. */
+  .legal-doc .clause-content > p:first-child { margin-top: 0; }
+  .legal-doc .clause-content > p { margin: 0 0 4px 0; }
+
+  /* Level 1 - top-level clauses: "1." "2." ... */
+  .legal-doc .clause.lvl1 { margin: 10px 0; }
+  .legal-doc .clause-row-lvl1 .marker {
     font-weight: 700;
     color: ${BRAND.headingTeal};
   }
+  .legal-doc .clause-row-lvl1 .clause-content > p:first-child strong { color: ${BRAND.headingTeal}; }
 
-  /* Level 2 - sub-clauses nested one level in: "1.1." "1.2." (compound of
-     parent + own position, via counters()). */
-  .legal-doc li ol[type="1"] { margin: 4px 0; }
-  .legal-doc li ol[type="1"] > li { padding-left: 42px; margin-bottom: 6px; }
-  .legal-doc li ol[type="1"] > li::before {
-    content: counters(list-item, ".") ".";
-    position: absolute;
-    left: 0;
-    top: 0;
-    font-weight: 600;
-  }
+  /* Level 2 - sub-clauses: "1.1." "1.2." */
+  .legal-doc .clause.lvl2 { margin: 4px 0 4px 26px; }
+  .legal-doc .clause.lvl2 .marker { font-weight: 600; }
+  .legal-doc .clause.lvl2.clause-body-only { margin-left: 26px; }
 
   /* Level 3 - lettered sub-points: "(a)" "(b)" */
-  .legal-doc ol[type="a"] { padding-left: 42px; margin: 4px 0; }
-  .legal-doc ol[type="a"] > li { padding-left: 22px; margin-bottom: 5px; }
-  .legal-doc ol[type="a"] > li::before {
-    content: "(" counter(list-item, lower-alpha) ")";
-    position: absolute;
-    left: 0;
-    top: 0;
-  }
+  .legal-doc .clause.lvl3 { margin: 4px 0 4px 16px; }
 
   /* Level 4 - roman-numeral sub-points: "(i)" "(ii)" */
-  .legal-doc ol[type="i"] { padding-left: 58px; margin: 4px 0; }
-  .legal-doc ol[type="i"] > li { padding-left: 26px; margin-bottom: 5px; }
-  .legal-doc ol[type="i"] > li::before {
-    content: "(" counter(list-item, lower-roman) ")";
-    position: absolute;
-    left: 0;
-    top: 0;
-  }
+  .legal-doc .clause.lvl4 { margin: 4px 0 4px 16px; }
+
+  /* Reference Schedule table's Item numbers are also literal text now
+     (same cross-renderer reasoning as above) — just needs a little
+     left-padding since it no longer has a native list marker. */
+  .legal-doc table th:first-child { padding-left: 10px; }
 
   /* Word's deeper-indented paragraphs came through pandoc as <blockquote>.
      They're indented body text, not quotations, so drop the quote-style
-     left rule and just align them under their level. */
+     left rule. */
   .legal-doc blockquote { margin: 0 0 4px 0; padding: 0; border-left: none; color: inherit; }
-  .legal-doc > ol > blockquote { margin: 4px 0 8px 26px; color: #333; }
-  .legal-doc > ol + p, .legal-doc > ol + blockquote { margin: 4px 0 12px 42px; color: #333; }
   .legal-doc u { text-decoration: underline; color: ${BRAND.headingTeal}; }
   .commitment-doc { font-size: 10.5px; }
   .commitment-doc > p:first-child { color: ${BRAND.headingTeal}; font-size: 13px; font-weight: 700; }
@@ -247,15 +228,15 @@ export const sharedStyles = `
 
   /* "COMMERCIAL CLEANING SERVICES CONTRACT" divider — always starts its own
      page (it introduces the Terms & Conditions that follow), styled as a
-     deliberate title page rather than a stray trailing line. */
+     deliberate title page rather than a stray trailing line.
+     Uses padding-top instead of flex+min-height:70vh to vertically
+     center — Word has no concept of flexbox or viewport units (vh), so
+     the old version rendered as plain top-left text with no centering
+     at all in the Word export. Padding is a plain block-level property
+     both renderers understand identically. */
   .contract-divider {
-    page-break-before: always;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
     text-align: center;
-    min-height: 70vh;
+    padding-top: 140px;
   }
   .contract-divider-title {
     font-size: 26px;
@@ -303,23 +284,34 @@ export function escapeHtml(str: string): string {
 
 export function docHeader(assets: { logo: string }) {
   return `
-  <div class="doc-header">
-    <img src="${assets.logo}" alt="Innova Services Group" />
-    <div class="company-info">
+  <table class="doc-header-table"><tr>
+    <td class="dh-logo"><img src="${assets.logo}" alt="Innova Services Group" /></td>
+    <td class="dh-info">
       <strong>INNOVA SERVICES GROUP</strong><br/>
       ABN 29 614 885 951<br/>
       1300 183 344<br/>
       hello@innovaservicesgroup.com.au<br/>
       www.innovaservicesgroup.com.au
-    </div>
-  </div>`;
+    </td>
+  </tr></table>`;
 }
 
 export function docFooter(assets: { badge: string }) {
   return `
-  <div class="footer-band">
-    <img src="${assets.badge}" alt="" />
-    <span>30 YEARS IN THE INDUSTRY</span>
+  <table class="footer-band-table"><tr>
+    <td class="fb-cell"><img src="${assets.badge}" alt="" /><span>30 YEARS IN THE INDUSTRY</span></td>
+  </tr></table>`;
+}
+
+export function contractDividerPage(assets: { logo: string; badge: string }): string {
+  return `
+  <div class="page page-break">
+    ${docHeader(assets)}
+    <div class="contract-divider">
+      <p class="contract-divider-title">COMMERCIAL CLEANING SERVICES CONTRACT</p>
+      <p class="contract-divider-sub">30 Years in the Industry</p>
+    </div>
+    ${docFooter(assets)}
   </div>`;
 }
 

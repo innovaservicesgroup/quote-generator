@@ -7,6 +7,7 @@ import {
   wrapDocument,
   escapeHtml,
   signatureImageFor,
+  contractDividerPage,
 } from "./layout";
 
 function esc(s: string) {
@@ -137,6 +138,8 @@ export function renderLineItemFamilyTemplate(
     </div>
     ${docFooter(assets)}
   </div>
+
+  ${contractDividerPage(assets)}
 
   <div class="page page-break">
     ${docHeader(assets)}

@@ -32,8 +32,11 @@ export default function QuoteWizardPage() {
   const [templateId, setTemplateId] = useState<string | null>(null);
   const [quoteData, setQuoteData] = useState<QuoteData | null>(null);
   const [savedNotice, setSavedNotice] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [resumePrompt, setResumePrompt] = useState<SavedDraft | null>(null);
   const [showSavedQuotes, setShowSavedQuotes] = useState(false);
+  const [namePromptOpen, setNamePromptOpen] = useState(false);
+  const [nameInput, setNameInput] = useState("");
   const draftIdRef = useRef<string | null>(null);
 
   // On first load, check for a saved draft and offer to resume it.
@@ -79,24 +82,28 @@ export default function QuoteWizardPage() {
       // ignore — the shared save below is what matters most
     }
 
-    // Ask once for a name to attribute the save to (remembered after that).
     let savedBy = "";
     try {
       savedBy = localStorage.getItem(SAVED_BY_KEY) || "";
     } catch {
       // ignore
     }
+
     if (!savedBy) {
-      savedBy = window.prompt("Your name (so teammates know who saved this):") || "";
-      if (savedBy) {
-        try {
-          localStorage.setItem(SAVED_BY_KEY, savedBy);
-        } catch {
-          // ignore
-        }
-      }
+      // Ask via an in-app modal rather than window.prompt() — native
+      // browser dialogs are unreliable (sometimes silently a no-op) when
+      // this app is running as an installed PWA / added-to-home-screen on
+      // mobile, which this app supports. performSave() runs once the
+      // modal is submitted.
+      setNamePromptOpen(true);
+      return;
     }
 
+    await performSave(savedBy);
+  };
+
+  const performSave = async (savedBy: string) => {
+    setSaveError(null);
     if (!draftIdRef.current) {
       draftIdRef.current = crypto.randomUUID();
     }
@@ -117,12 +124,34 @@ export default function QuoteWizardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(record),
       });
-      if (!res.ok) throw new Error((await res.json()).error || "Save failed");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `Save failed (status ${res.status})`);
+      }
       setSavedNotice("Saved — visible to the whole team. Come back anytime via \"Saved Quotes\".");
-    } catch {
-      setSavedNotice("Saved on this device only — couldn't reach shared storage.");
+      setTimeout(() => setSavedNotice(null), 5000);
+    } catch (e: any) {
+      // Surface the real error instead of failing silently — a save that
+      // only landed in localStorage (not the shared store) needs to be
+      // obvious, not look identical to a successful shared save.
+      setSaveError(
+        `Saved on this device only — couldn't reach shared storage (${e.message || "network error"}).`
+      );
+      setTimeout(() => setSaveError(null), 8000);
     }
-    setTimeout(() => setSavedNotice(null), 5000);
+  };
+
+  const submitNamePrompt = async () => {
+    const name = nameInput.trim();
+    if (!name) return;
+    try {
+      localStorage.setItem(SAVED_BY_KEY, name);
+    } catch {
+      // ignore
+    }
+    setNamePromptOpen(false);
+    setNameInput("");
+    await performSave(name);
   };
 
   const resumeDraft = () => {
@@ -164,6 +193,11 @@ export default function QuoteWizardPage() {
                 {savedNotice}
               </span>
             )}
+            {saveError && (
+              <span className="text-xs text-red-600 font-medium max-w-[220px] sm:max-w-none">
+                {saveError}
+              </span>
+            )}
             <button
               onClick={() => setShowSavedQuotes(true)}
               className="text-xs font-semibold text-[#006b86] border border-[#40aac4] rounded-lg px-3 py-1.5 hover:bg-[#40aac4]/5"
@@ -189,6 +223,45 @@ export default function QuoteWizardPage() {
           </div>
         </div>
       </header>
+
+      {namePromptOpen && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6">
+            <h3 className="text-base font-semibold text-[#1a1a1a] mb-1">
+              Your name
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">
+              So teammates know who saved this quote. Only asked once — remembered on this device after that.
+            </p>
+            <input
+              autoFocus
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && submitNamePrompt()}
+              placeholder="e.g. Coraline"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm mb-4 focus:outline-none focus:border-[#40aac4]"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setNamePromptOpen(false);
+                  setNameInput("");
+                }}
+                className="text-sm text-gray-500 px-4 py-2 rounded-lg hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitNamePrompt}
+                disabled={!nameInput.trim()}
+                className="bg-[#40aac4] disabled:bg-gray-300 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-[#369ab3]"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {resumePrompt && (
         <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-4">

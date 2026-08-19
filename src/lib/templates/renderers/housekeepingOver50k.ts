@@ -7,6 +7,7 @@ import {
   wrapDocument,
   escapeHtml,
   signatureImageFor,
+  contractDividerPage,
 } from "../shared/layout";
 import {
   HOUSEKEEPING_DEPARTURES_SECTIONS,
@@ -134,6 +135,8 @@ export function renderHousekeepingOver50k(data: QuoteData): string {
     </div>
     ${docFooter(assets)}
   </div>
+
+  ${contractDividerPage(assets)}
 
   <div class="page page-break">
     ${docHeader(assets)}
